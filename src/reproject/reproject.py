@@ -105,6 +105,7 @@ def reproject_geometry(
     num_rows = int((ymax - ymin) / cell_size)
     num_cols = int((xmax - xmin) / cell_size)
     src_transform = [cell_size, 0.0, xmin, 0.0, -cell_size, ymax]
+    # maybe raise an error if the array size will be very large (before creating)
     src_raster: Any = np.zeros((num_rows, num_cols), dtype=np.uint8)
 
     features.rasterize(
