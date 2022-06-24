@@ -12,7 +12,7 @@ def reproject_geometry(
     geojson: Dict[str, Any],
     src_crs: str,
     dst_crs: str,
-    dst_tolerance: Optional[float],
+    dst_tolerance: Optional[float] = None,
     precision: int = DEFAULT_PRECISION,
 ) -> Dict[str, Any]:
     """Reprojects a GeoJSON-like geometry from a source to destination CRS with
@@ -68,7 +68,7 @@ def reproject_multipolygon(
     multipolygon: MultiPolygon,
     src_crs: str,
     dst_crs: str,
-    dst_tolerance: Optional[float],
+    dst_tolerance: Optional[float] = None,
     precision: int = DEFAULT_PRECISION,
 ) -> MultiPolygon:
     """Reprojects each polygon in a multipolygon from a source to destination
@@ -108,7 +108,7 @@ def reproject_polygon(
     polygon: Polygon,
     src_crs: str,
     dst_crs: str,
-    dst_tolerance: Optional[float],
+    dst_tolerance: Optional[float] = None,
     precision: int = DEFAULT_PRECISION,
 ) -> Polygon:
     """Reprojects a polygon from a source to destination CRS with the option to
