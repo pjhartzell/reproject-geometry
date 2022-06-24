@@ -20,7 +20,7 @@ def nearest_multiple(number: float, multiple: float) -> float:
 
 
 def src_tol(src_crs: str, src_bbox: List[float], dst_crs: str, dst_tol: float) -> float:
-    """Converts dst_tolerance from destination to source linear units
+    """Converts a tolerance from destination to source units.
 
     Noting that longitudinal ground distances vary with latitude, we use
     the mid-latitude value of the bounding box to convert between geographic
@@ -44,7 +44,7 @@ def src_tol(src_crs: str, src_bbox: List[float], dst_crs: str, dst_tol: float) -
     if s_crs.is_geographic and d_crs.is_geographic:
         s_tol = dst_tol
     elif s_crs.is_projected and d_crs.is_projected:
-        s_tol = (d_crs.linear_units_factor / s_crs.linear_units_factor) * dst_tol
+        s_tol = (d_crs.linear_units_factor[1] / s_crs.linear_units_factor[1]) * dst_tol
     elif s_crs.is_projected and d_crs.is_geographic:
         dst_bbox = warp.transform_bounds(src_crs, dst_crs, *src_bbox)
         mid_latitude = (dst_bbox[1] + dst_bbox[3]) / 2
