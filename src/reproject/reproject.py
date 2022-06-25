@@ -1,50 +1,189 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-import shapely.geometry
-from rasterio import features, warp
+from rasterio import warp
 from rasterio.crs import CRS
+from shapely.geometry import MultiPolygon, Polygon, mapping, shape
+
+DEFAULT_PRECISION = 3
 
 
-def nearest_multiple(number: float, multiple: float) -> float:
-    """Rounds a number to the nearest multiple.
+def reproject_geometry(
+    geojson: Dict[str, Any],
+    src_crs: str,
+    dst_crs: str,
+    dst_tolerance: Optional[float] = None,
+    precision: int = DEFAULT_PRECISION,
+) -> Dict[str, Any]:
+    """Reprojects a GeoJSON-like geometry from a source to destination CRS with
+    the option to limit reprojection error to approximately dst_tolerance.
+
+    If dst_tolerance is specified, additional vertices are inserted into the
+    geometry polygon(s) prior to reprojection to capture projection distortion.
+    The projected geometries are then simplified by removing vertices until the
+    simplificaton imparts an error that exceeds dst_tolerance. The supplied
+    dst_tolerance must be in the linear unit (e.g., meters, feet, degrees) of
+    the destination CRS.
 
     Args:
-        number (float): Number to be rounded
-        multiple (float): Multiple to which the number will be rounded
+        geojson (Dict[str, Any]): A GeoJSON-like dictionary containing a
+            polygon or multipolygon to be reprojected.
+        src_crs (str): Source CRS string, e.g., an EPSG code or WKT2.
+        dst_crs (str): Destination CRS string.
+        dst_tolerance (float, optional): Maximum acceptable "error" of the
+            reprojected Polygon(s) in the destination CRS. Must be in the linear
+            unit of the destination CRS.
+        precision (int, optional): The number of decimal places to include in
+            the coordinates for the reprojected geometry. Defaults to 3 decimal
+            places.
 
     Returns:
-        float: Rounded number
+         Dict[str, Any]: A GeoJSON-like dictionary containg the reprojected
+            Polygon(s)
     """
-    return multiple * round(number / multiple)
+    geometry = shape(geojson)
+    if isinstance(geometry, Polygon):
+        multipolygon = False
+    elif isinstance(geometry, MultiPolygon):
+        multipolygon = True
+    else:
+        raise ValueError(
+            f"Can only reproject Polygons or MultiPolygons, geometry={geometry}"
+        )
+
+    if multipolygon:
+        reprojected_geometry = reproject_multipolygon(
+            geometry, src_crs, dst_crs, dst_tolerance, precision
+        )
+    else:
+        reprojected_geometry = reproject_polygon(
+            geometry, src_crs, dst_crs, dst_tolerance, precision
+        )
+
+    result: Dict[str, Any] = mapping(reprojected_geometry)
+    return result
 
 
-def src_tol(src_crs: str, src_bbox: List[float], dst_crs: str, dst_tol: float) -> float:
-    """Converts a tolerance from destination to source units.
+def reproject_multipolygon(
+    multipolygon: MultiPolygon,
+    src_crs: str,
+    dst_crs: str,
+    dst_tolerance: Optional[float] = None,
+    precision: int = DEFAULT_PRECISION,
+) -> MultiPolygon:
+    """Reprojects each polygon in a multipolygon from a source to destination
+    CRS with the option to limit reprojection error to approximately
+    dst_tolerance.
 
-    Noting that longitudinal ground distances vary with latitude, we use
-    the mid-latitude value of the bounding box to convert between geographic
-    and projected distances. We also use a spherical approximation for the shape
-    of the Earth.
+    If dst_tolerance is specified, additional vertices are inserted into the
+    geometry polygon(s) prior to reprojection to capture projection distortion.
+    The projected geometries are then simplified by removing vertices until the
+    simplificaton imparts an error that exceeds dst_tolerance. The supplied
+    dst_tolerance must be in the linear unit (e.g., meters, feet, degrees) of
+    the destination CRS.
 
     Args:
-        src_crs (str): CRS of the source geometry
-        src_bbox (List[float]): Bounding box of the geometry in the source CRS
-        dst_crs (str): CRS of the destination geometry
-        dst_tol (float): Desired maximum error (dst_tolerance) of the geometry
-            after reprojection to the destination CRS
+        multipolygon (MultiPolygon): The multipolygon to be reprojected.
+        src_crs (str): Source CRS string, e.g., an EPSG code or WKT2.
+        dst_crs (str): Destination CRS string.
+        dst_tolerance (float, optional): Maximum acceptable "error" of the
+            reprojected Polygon(s) in the destination CRS. Must be in the linear
+            unit of the destination CRS.
+        precision (int, optional): The number of decimal places to include in
+            the coordinates for the reprojected geometry. Defaults to 3 decimal
+            places.
 
     Returns:
-        float: Maximum error (dst_tolerance) in the source CRS linear units
+        MultiPolygon: The reprojected multipolygon
+    """
+    polygons = []
+    for polygon in multipolygon.geoms:
+        polygons.extend(
+            reproject_polygon(polygon, src_crs, dst_crs, dst_tolerance, precision)
+        )
+    return MultiPolygon(polygons)
+
+
+def reproject_polygon(
+    polygon: Polygon,
+    src_crs: str,
+    dst_crs: str,
+    dst_tolerance: Optional[float] = None,
+    precision: int = DEFAULT_PRECISION,
+) -> Polygon:
+    """Reprojects a polygon from a source to destination CRS with the option to
+    limit reprojection error to approximately dst_tolerance.
+
+    If dst_tolerance is specified, additional vertices are inserted into the
+    geometry polygon(s) prior to reprojection to capture projection distortion.
+    The projected geometries are then simplified by removing vertices until the
+    simplificaton imparts an error that exceeds dst_tolerance. The supplied
+    dst_tolerance must be in the linear unit (e.g., meters, feet, degrees) of
+    the destination CRS.
+
+    Args:
+        polygon (Polygon): The polygon to be reprojected.
+        src_crs (str): Source CRS string, e.g., an EPSG code or WKT2.
+        dst_crs (str): Destination CRS string.
+        dst_tolerance (float, optional): Maximum acceptable "error" of the
+            reprojected Polygon(s) in the destination CRS. Must be in the linear
+            unit of the destination CRS.
+        precision (int, optional): The number of decimal places to include in
+            the coordinates for the reprojected geometry. Defaults to 3 decimal
+            places.
+
+    Returns:
+        Polygon: The reprojected polygon
+    """
+
+    if dst_tolerance is not None:
+        src_bbox = polygon.bounds
+        src_tolerance = _src_tol(src_crs, src_bbox, dst_crs, dst_tolerance)
+        polygon = Polygon(_densify_by_distance(polygon.exterior.coords, src_tolerance))
+
+    polygon = shape(warp.transform_geom(src_crs, dst_crs, polygon, precision=precision))
+
+    if dst_tolerance is not None:
+        return polygon.simplify(dst_tolerance).simplify(0)
+    else:
+        return polygon.simplify(0)
+
+
+def _src_tol(
+    src_crs: str, src_bbox: List[float], dst_crs: str, dst_tol: float
+) -> float:
+    """Converts a tolerance (a distance) from a source CRS linear unit to a
+    destination CRS linear unit.
+
+    Longitudinal ground distances vary with latitude, which means the conversion
+    of the tolerance (distance) between destination and source units also varies
+    with latitude. A mid-latitude value of the bounding box is therefore used to
+    'average' this discrepancy when converting between geographic and projected
+    units. Since this is not an exact computation, a spherical approximation is
+    used for the shape of the Earth for simplicity.
+
+    Args:
+        src_crs (str): CRS of the source geometry.
+        src_bbox (List[float]): Bounding box of the geometry in the source CRS.
+        dst_crs (str): CRS of the destination geometry.
+        dst_tolerance (float, optional): Maximum acceptable "error" of the
+            reprojected Polygon(s) in the destination CRS. Must be in the linear
+            unit of the destination CRS.
+
+    Returns:
+        float: The destination tolerance (distance) in the source CRS linear
+            units.
     """
     d_crs = CRS.from_string(dst_crs)
     s_crs = CRS.from_string(src_crs)
 
-    s_tol: float
+    src_tol: float
     if s_crs.is_geographic and d_crs.is_geographic:
-        s_tol = dst_tol
+        src_tol = dst_tol
     elif s_crs.is_projected and d_crs.is_projected:
-        s_tol = (d_crs.linear_units_factor[1] / s_crs.linear_units_factor[1]) * dst_tol
+        src_tol = (
+            d_crs.linear_units_factor[1] / s_crs.linear_units_factor[1]
+        ) * dst_tol
     elif s_crs.is_projected and d_crs.is_geographic:
         dst_bbox = warp.transform_bounds(src_crs, dst_crs, *src_bbox)
         mid_latitude = (dst_bbox[1] + dst_bbox[3]) / 2
@@ -52,107 +191,44 @@ def src_tol(src_crs: str, src_bbox: List[float], dst_crs: str, dst_tol: float) -
         meters_per_src_unit = s_crs.linear_units_factor[1]
         src_units_per_degree = meters_per_degree / meters_per_src_unit
         tol_src_units = src_units_per_degree * dst_tol
-        s_tol = tol_src_units
+        src_tol = tol_src_units
     elif s_crs.is_geographic and d_crs.is_projected:
         mid_latitude = (src_bbox[1] + src_bbox[3]) / 2
         meters_per_degree = 111320 * np.cos(np.deg2rad(mid_latitude))
         meters_per_dst_unit = d_crs.linear_units_factor[1]
         tol_meters = meters_per_dst_unit * dst_tol
         tol_degree = tol_meters / meters_per_degree
-        s_tol = tol_degree
-    return s_tol
+        src_tol = tol_degree
+    return src_tol
 
 
-def reproject_geometry(
-    geojson: Dict[str, Any], src_crs: str, dst_crs: str, dst_tolerance: float
-) -> Dict[str, Any]:
-    """Reprojects a shapely Polygon from a source to destination CRS.
-
-    The reprojected geometry contains additional vertices to bound reprojection
-    distortion errors to within the specified tolerance. The supplied tolerance
-    must be in the linear unit (e.g., meters, feet, degrees) of the destination
-    CRS.
-
-    TODO:
-        1. Handle MultiPolygons.
-        2. Merge exactly reprojected original vertices with the approximated
-            additional vertices for cleaner results.
+def _densify_by_distance(
+    point_list: List[Tuple[float, float]], densification_length: float
+) -> List[Tuple[float, float]]:
+    """Densifies the number of points in a list of points by inserting points
+    at densification_length intervals along the polygon formed by the points.
 
     Args:
-        geometry (Dict[str, Any]): A geojson-like dictionary containing a
-            Polygon to be reprojected
-        src_crs (str): Source CRS string, e.g., an EPSG code or WKT
-        dst_crs (str): Destination CRS string
-        dst_tolerance (float): Maximum acceptable "error" of the reprojected
-            Polygon in the destination CRS linear unit.
+        point_list (List[Tuple[float, float]]): The list of points to be
+            densified.
+        densification_length (int): The interval at which to insert additional
+            points.
 
     Returns:
-        Dict[str, Any]: _description_
+        List[Tuple[float, float]]: The list of densified points.
     """
-    geometry = shapely.geometry.shape(geojson)
-    if not isinstance(geometry, shapely.geometry.Polygon):
-        raise ValueError(f"Can only reproject Polygons, geometry={geometry}")
+    points: Any = np.asarray(point_list)
 
-    bbox = geometry.bounds
-    src_tolerance = src_tol(src_crs, bbox, dst_crs, dst_tolerance)
+    dxdy = points[1:, :] - points[:-1, :]
+    segment_lengths = np.sqrt(np.sum(np.square(dxdy), axis=1))
+    total_length = np.sum(segment_lengths)
 
-    cell_size = src_tolerance / 2
-    xmin = nearest_multiple(bbox[0] - (2 * src_tolerance), cell_size)
-    ymin = nearest_multiple(bbox[1] - (2 * src_tolerance), cell_size)
-    xmax = nearest_multiple(bbox[2] + (2 * src_tolerance), cell_size)
-    ymax = nearest_multiple(bbox[3] + (2 * src_tolerance), cell_size)
+    cum_segment_lengths = np.cumsum(segment_lengths)
+    cum_segment_lengths = np.insert(cum_segment_lengths, 0, [0])
+    cum_interp_lengths = np.arange(0, total_length, densification_length)
+    cum_interp_lengths = np.append(cum_interp_lengths, [total_length])
 
-    num_rows = int((ymax - ymin) / cell_size)
-    num_cols = int((xmax - xmin) / cell_size)
-    src_transform = [cell_size, 0.0, xmin, 0.0, -cell_size, ymax]
-    # maybe raise an error if the array size will be very large (before creating)
-    src_raster: Any = np.zeros((num_rows, num_cols), dtype=np.uint8)
+    interp_x = np.interp(cum_interp_lengths, cum_segment_lengths, points[:, 0])
+    interp_y = np.interp(cum_interp_lengths, cum_segment_lengths, points[:, 1])
 
-    features.rasterize(
-        [(geometry)], out=src_raster, transform=src_transform, default_value=255
-    )
-
-    dst_transform, dst_width, dst_height = warp.calculate_default_transform(
-        src_crs,
-        dst_crs,
-        width=num_cols,
-        height=num_rows,
-        left=xmin,
-        bottom=ymin,
-        right=xmax,
-        top=ymax,
-    )
-    dst_raster: Any = np.zeros((dst_height, dst_width), dtype=np.uint8)
-    warp.reproject(
-        src_raster,
-        dst_raster,
-        src_transform=src_transform,
-        src_crs=src_crs,
-        dst_transform=dst_transform,
-        dst_crs=dst_crs,
-        resampling=warp.Resampling.nearest,
-    )
-
-    shapes = features.shapes(dst_raster, transform=dst_transform)
-    for poly, val in shapes:
-        if val == 255:
-            shape = shapely.geometry.shape(poly).simplify(dst_tolerance)
-
-    reprojected_geometry: Dict[str, Any] = shapely.geometry.mapping(shape)
-    return reprojected_geometry
-
-
-# import json
-# if __name__ == "__main__":
-#     src_crs = "PROJCS[\"unnamed\",GEOGCS[\"Unknown datum based upon the custom spheroid\",DATUM[\"Not specified (based on custom spheroid)\",SPHEROID[\"Custom spheroid\",6371007.181,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Sinusoidal\"],PARAMETER[\"longitude_of_center\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"Meter\",1],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]"  # noqa
-#     dst_crs = "EPSG:4326"
-#     geojson_file = "tests/data-file/viirs_h11v05_sinusoidal.json"
-#     dst_tolerance = 0.01
-
-#     with open(geojson_file, "r") as infile:
-#         geojson = json.load(infile)
-
-#     reprojected_geojson = reproject_geometry(geojson, src_crs, dst_crs, dst_tolerance)
-
-#     with open("reprojected.json", "w") as outfile:
-#         json.dump(reprojected_geojson, outfile)
+    return [(x, y) for x, y in zip(interp_x, interp_y)]
