@@ -11,7 +11,7 @@ DEFAULT_PRECISION = 3
 def reproject_geometry(
     geojson: Dict[str, Any],
     src_crs: str,
-    dst_crs: int,
+    dst_crs: str,
     dst_tolerance: Optional[float] = None,
     precision: int = DEFAULT_PRECISION,
 ) -> Dict[str, Any]:
