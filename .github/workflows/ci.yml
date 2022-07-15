@@ -1,3 +1,6 @@
+# Take a look at https://pre-commit.ci/ for an automated service (a bot...) from
+# the creator of pre-commit that uses your existing .pre-commit-config.yml file.
+
 name: CI
 
 on:
