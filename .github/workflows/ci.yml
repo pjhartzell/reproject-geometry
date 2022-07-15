@@ -1,8 +1,11 @@
+# Take a look at https://pre-commit.ci/ for an automated service (a bot...) from
+# the creator of pre-commit that uses your existing .pre-commit-config.yml file.
+
 name: CI
 
 on:
-  push:
   pull_request:
+  push:
     branches: [ "main" ]
 
 permissions:
@@ -17,18 +20,24 @@ jobs:
         python-version: ["3.7", "3.8", "3.9"]
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v3
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+
+    - name: Install app and dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install .
         pip install -r requirements-dev.txt
+
     - name: Format and lint
       run: |
         pre-commit run --all-files
+
     - name: Test
       run: |
         pytest
