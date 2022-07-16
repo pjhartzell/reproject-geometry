@@ -20,3 +20,5 @@ repos:
     rev: v0.950
     hooks:
       - id: mypy
+        additional_dependencies:
+          - click >= 8.1.3
