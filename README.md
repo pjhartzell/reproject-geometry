@@ -29,7 +29,7 @@ A final thought on the use of a GeoJSON-like dictionary for input. It is recogni
 pip install .
 ```
 
-## Command-line Usage
+## Command Line
 
 ```shell
 $ reproject <json file> <source crs> <destination crs> <options>
@@ -45,4 +45,31 @@ $ reproject <json file> <source crs> <destination crs> <options>
 $ reproject tests/data-files/HLS.S30.T19LDD.2022166T144741.v2.0.B09_epsg_32619.json "EPSG:32619" "EPSG:4326" -p 5 -t 0.0001 -o test.json
 ```
 
-As usual, use `reproject --help` to see a description of the input and options.
+## Contributing
+
+We use [pre-commit](https://pre-commit.com/) to check any changes.
+To set up your development environment:
+
+```shell
+$ pip install -e .
+$ pip install -r requirements-dev.txt
+$ pre-commit install
+```
+
+To check all files:
+
+```shell
+$ pre-commit run --all-files
+```
+
+To run the tests:
+
+```shell
+$ pytest
+```
+
+To view test coverage:
+
+```shell
+$ pytest --cov=reproject tests
+```
