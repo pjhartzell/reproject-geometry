@@ -1,5 +1,10 @@
 # Reproject a Polygon with Bounded Error
 
+## Fair Warning
+This repo is a mix of something useful and a testbed for 'trying stuff out'.
+
+## Summary
+
 The STAC Item geometry field contains a polygon (or multi-polygon) that traces the outline of the Item asset data in WGS84 lon/lat coordinates. However, the asset data is usually in a projected CRS (i.e., not WGS84), so the polygon defining the data outline in the source CRS must be reprojected to WGS84. For high distortion projections, e.g., the sinusoidal projection used by MODIS and VIIRS, the reprojected polygon can stray far from the reprojected data. 
 
 This can be addressed by inserting additional vertices into a polygon prior to reprojection. In the example below, the blue line is the projected original geometry (which was just four coordinates, one on each corner) and the green line is the projected geometry after densifying the original geometry with 12 additional vertices.
