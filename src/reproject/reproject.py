@@ -16,18 +16,18 @@ def reproject_geometry(
     precision: int = DEFAULT_PRECISION,
 ) -> Dict[str, Any]:
     """Reprojects a GeoJSON-like geometry from a source to destination CRS with
-    the option to limit reprojection error to approximately dst_tolerance.
+    the option to limit reprojection error to approximately ``dst_tolerance``.
 
-    If dst_tolerance is specified, additional vertices are inserted into the
+    If ``dst_tolerance`` is specified, additional vertices are inserted into the
     geometry polygon(s) prior to reprojection to capture projection distortion.
     The projected geometries are then simplified by removing vertices until the
-    simplificaton imparts an error that exceeds dst_tolerance. The supplied
-    dst_tolerance must be in the linear unit (e.g., meters, feet, degrees) of
+    simplificaton imparts an error that exceeds ``dst_tolerance``. The supplied
+    ``dst_tolerance`` must be in the linear unit (e.g., meters, feet, degrees) of
     the destination CRS.
 
     Args:
-        geojson (Dict[str, Any]): A GeoJSON-like dictionary containing a
-            polygon or multipolygon to be reprojected.
+        geojson (Dict[str, Any]): A GeoJSON-like dictionary containing a polygon
+            or multipolygon to be reprojected.
         src_crs (str): Source CRS string, e.g., an EPSG code or WKT2.
         dst_crs (str): Destination CRS string.
         dst_tolerance (float, optional): Maximum acceptable "error" of the
@@ -38,8 +38,8 @@ def reproject_geometry(
             places.
 
     Returns:
-         Dict[str, Any]: A GeoJSON-like dictionary containg the reprojected
-            Polygon(s)
+        Dict[str, Any]: A GeoJSON-like dictionary containg the reprojected
+            Polygon(s).
     """
     geometry = shape(geojson)
     if isinstance(geometry, Polygon):
@@ -73,13 +73,13 @@ def reproject_multipolygon(
 ) -> MultiPolygon:
     """Reprojects each polygon in a multipolygon from a source to destination
     CRS with the option to limit reprojection error to approximately
-    dst_tolerance.
+    ``dst_tolerance``.
 
-    If dst_tolerance is specified, additional vertices are inserted into the
+    If ``dst_tolerance`` is specified, additional vertices are inserted into the
     geometry polygon(s) prior to reprojection to capture projection distortion.
     The projected geometries are then simplified by removing vertices until the
-    simplificaton imparts an error that exceeds dst_tolerance. The supplied
-    dst_tolerance must be in the linear unit (e.g., meters, feet, degrees) of
+    simplificaton imparts an error that exceeds ``dst_tolerance``. The supplied
+    ``dst_tolerance`` must be in the linear unit (e.g., meters, feet, degrees) of
     the destination CRS.
 
     Args:
@@ -94,7 +94,7 @@ def reproject_multipolygon(
             places.
 
     Returns:
-        MultiPolygon: The reprojected multipolygon
+        MultiPolygon: The reprojected multipolygon.
     """
     polygons = []
     for polygon in multipolygon.geoms:
@@ -112,13 +112,13 @@ def reproject_polygon(
     precision: int = DEFAULT_PRECISION,
 ) -> Polygon:
     """Reprojects a polygon from a source to destination CRS with the option to
-    limit reprojection error to approximately dst_tolerance.
+    limit reprojection error to approximately ``dst_tolerance``.
 
-    If dst_tolerance is specified, additional vertices are inserted into the
+    If ``dst_tolerance`` is specified, additional vertices are inserted into the
     geometry polygon(s) prior to reprojection to capture projection distortion.
     The projected geometries are then simplified by removing vertices until the
-    simplificaton imparts an error that exceeds dst_tolerance. The supplied
-    dst_tolerance must be in the linear unit (e.g., meters, feet, degrees) of
+    simplificaton imparts an error that exceeds ``dst_tolerance``. The supplied
+    ``dst_tolerance`` must be in the linear unit (e.g., meters, feet, degrees) of
     the destination CRS.
 
     Args:
@@ -133,7 +133,7 @@ def reproject_polygon(
             places.
 
     Returns:
-        Polygon: The reprojected polygon
+        Polygon: The reprojected polygon.
     """
 
     if dst_tolerance is not None:

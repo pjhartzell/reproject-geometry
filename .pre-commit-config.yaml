@@ -1,5 +1,7 @@
 # Run `pre-commit run --all-files` when adding or changing entries.
 
+exclude: docs/
+
 repos:
   - repo: https://github.com/psf/black
     rev: 22.3.0
