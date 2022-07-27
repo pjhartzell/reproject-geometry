@@ -9,7 +9,7 @@ The STAC Item geometry field contains a polygon (or multi-polygon) that traces t
 
 This can be addressed by inserting additional vertices into a polygon prior to reprojection. In the example below, the blue line is the projected original geometry (which was just four coordinates, one on each corner) and the green line is the projected geometry after densifying the original geometry with 12 additional vertices.
 
-![](docs/viirs-h11v05.png)
+![](img/viirs-h11v05.png)
 
 Unfortunately, densification is a trial and error process that depends on local projection distortion and the amount of "error", i.e., how far the polygon edges can stray from the edge of the projected raster data, that is acceptable. For zero error, you can create a polygon that follows the edges of each pixel in the reprojected data. But this produces a huge coordinate list in the polygon, which is not efficient for storage or analysis.
 
