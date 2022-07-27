@@ -16,6 +16,13 @@ module <https://rasterio.readthedocs.io/en/latest/api/rasterio.crs.html>`_.
 
 :doc:`api`
 
+.. toctree:: 
+   :maxdepth: 2
+   :hidden:
+   :caption: Contents:
+
+   API <api.rst>
+
 Installation
 ------------
 
