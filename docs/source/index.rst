@@ -14,14 +14,11 @@ to geographic WGS84 coordinates (latitude, longitude). However, reprojection is
 possible between any source and destination CRS supported by rasterio's `crs 
 module <https://rasterio.readthedocs.io/en/latest/api/rasterio.crs.html>`_.
 
-:doc:`api`
-
 .. toctree:: 
    :maxdepth: 2
-   :hidden:
    :caption: Contents:
 
-   API <api.rst>
+   api.rst
 
 Installation
 ------------
