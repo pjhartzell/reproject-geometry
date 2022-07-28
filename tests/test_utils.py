@@ -1,6 +1,6 @@
 import pytest
 
-from reproject.reproject import _densify_by_distance, _src_tol
+from reproject_geometry.reproject import _densify_by_distance, _src_tol
 
 
 def test_geographic_to_geographic() -> None:

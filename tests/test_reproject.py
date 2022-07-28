@@ -1,6 +1,6 @@
 import json
 
-from reproject.reproject import reproject_geometry
+from reproject_geometry.reproject import reproject_geometry
 
 
 def test_sinusoidal_to_wgs84_densify() -> None:

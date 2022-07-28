@@ -4,7 +4,7 @@ from typing import Optional
 
 import click
 
-from reproject.reproject import DEFAULT_PRECISION, reproject_geometry
+from reproject_geometry.reproject import DEFAULT_PRECISION, reproject_geometry
 
 
 @click.command()

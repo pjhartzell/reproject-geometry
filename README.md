@@ -37,7 +37,7 @@ pip install .
 ## Command Line
 
 ```shell
-$ reproject <json file> <source crs> <destination crs> <options>
+$ reproject-geometry <json file> <source crs> <destination crs> <options>
 ```
 
 **Options:**
@@ -47,7 +47,7 @@ $ reproject <json file> <source crs> <destination crs> <options>
 
 **Example:**
 ```shell
-$ reproject tests/data-files/HLS.S30.T19LDD.2022166T144741.v2.0.B09_epsg_32619.json "EPSG:32619" "EPSG:4326" -p 5 -t 0.0001 -o test.json
+$ reproject-geometry tests/data-files/HLS.S30.T19LDD.2022166T144741.v2.0.B09_epsg_32619.json "EPSG:32619" "EPSG:4326" -p 5 -t 0.0001 -o test.json
 ```
 
 ## Contributing
