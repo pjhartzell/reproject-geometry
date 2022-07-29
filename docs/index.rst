@@ -6,11 +6,24 @@
 Reproject Geometry Docs
 ==============================================
 
+Reproject Geometry is a utility for transforming GeoJSON Polygon and MultiPolygon 
+geometries from one Coordinate Reference System (CRS) to another. The intended use
+case is transforming a geometry from projected CRS coordinates (northing, easting)
+to geographic WGS84 coordinates (latitude, longitude). However, reprojection is
+possible between any source and destination CRS supported by rasterio's `crs 
+module <https://rasterio.readthedocs.io/en/latest/api/rasterio.crs.html>`_.
+
 .. toctree::
    :maxdepth: 2
+   :hidden:
    :caption: Contents:
 
    api.rst
+
+API Reference
+-------------
+
+:doc:`api`
 
 Installation
 ------------
