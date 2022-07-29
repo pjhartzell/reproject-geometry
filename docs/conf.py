@@ -34,6 +34,7 @@ html_static_path = ['_static']
 html_theme_options = {
     "fixed_sidebar": True,
     "description": "A mix of something useful and a place to experiment: Caution!",
+    "page_width": "1080px"
 }
 html_sidebars = {
     "**": [
