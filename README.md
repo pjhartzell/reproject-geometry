@@ -34,6 +34,10 @@ A final thought on the use of a GeoJSON-like dictionary for input. It is recogni
 pip install .
 ```
 
+## Documentation
+
+See the [documentation page](https://reproject-geometry.readthedocs.io/en/latest/index.html) for the latest docs.
+
 ## Command Line
 
 ```shell
