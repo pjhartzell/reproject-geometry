@@ -19,7 +19,7 @@ release = '0.1.0'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx.ext.autodoc"]
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon"]
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
@@ -31,3 +31,13 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 html_theme = 'alabaster'
 html_static_path = ['_static']
+html_theme_options = {
+    "fixed_sidebar": True,
+    "description": "A mix of something useful and a place to experiment: Caution!",
+}
+html_sidebars = {
+    "**": [
+        "about.html",
+        "searchbox.html",
+    ]
+}
